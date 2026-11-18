@@ -7,6 +7,27 @@ Sentinel-SOC helps a junior SOC analyst review repeated sign-in failures, correl
 
 **Planned repository** [itsprshnt20/Sentinel-SOC](https://github.com/itsprshnt20/Sentinel-SOC)
 
+## Screenshots
+
+### OLED dashboard
+
+Load the synthetic demo or upload a CSV, then adjust the detection settings.
+
+![Sentinel-SOC OLED dashboard with CSV import and detection controls](docs/screenshots/oled-dashboard.png)
+
+### Alert queue
+
+Compare the synthetic alerts with and without a linked success.
+
+![Sentinel-SOC alert queue showing two synthetic login alerts and their statuses](docs/screenshots/alert-queue.png)
+
+### Incident evidence
+
+Review Casey's matched source rows, UTC timeline, and triage summary with the incident marked Investigating.
+
+![Casey incident detail showing the UTC evidence timeline, row citations, and JSON export](docs/screenshots/incident-evidence.png)
+
+
 ## Features
 
 - Import UTF-8 login CSVs, normalize timestamps, and report rejected source rows.
@@ -98,7 +119,7 @@ For a new empty repository, run these from the project root after signing in loc
 
 ```powershell
 git init -b main
-git add .gitignore .streamlit/config.toml LICENSE README.md app.py triage.py requirements.txt requirements.lock.txt samples/synthetic_logins.csv tests/test_triage.py tests/browser_smoke.py
+git add .gitignore .streamlit/config.toml LICENSE README.md app.py triage.py requirements.txt requirements.lock.txt samples/synthetic_logins.csv tests/test_triage.py tests/browser_smoke.py docs/screenshots
 git diff --cached --check
 git commit -m "Add Sentinel-SOC login triage dashboard"
 git remote add origin https://github.com/itsprshnt20/Sentinel-SOC.git

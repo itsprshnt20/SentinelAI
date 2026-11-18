@@ -69,10 +69,50 @@ def review(incident, settings, statuses, dataset_id):
 st.set_page_config(page_title="Sentinel-SOC", layout="wide")
 st.html("""
 <style>
-.stMainBlockContainer { max-width: 72rem; padding-top: 3.5rem; }
-.st-key-intro { border-left: 3px solid #82D8D2; padding-left: 1.2rem; }
-.st-key-intro h1 { letter-spacing: -.04em; font-size: clamp(2.4rem, 6vw, 4rem); }
-[data-testid="stMetric"] { background: #172331; border-radius: .75rem; padding: .75rem 1rem; }
+.stApp, [data-testid="stHeader"] { background: #000; }
+.stMainBlockContainer { max-width: 74rem; padding-top: 3.8rem; padding-bottom: 4rem; }
+.st-key-intro {
+    padding: clamp(1.3rem, 4vw, 2.7rem);
+    border: 1px solid #243430;
+    border-radius: 1.35rem;
+    background: radial-gradient(ellipse at 94% 0%, #162d2b 0%, #0a1110 38%, #050606 75%);
+}
+.st-key-intro h1 {
+    font-size: clamp(2.5rem, 7vw, 4.6rem);
+    letter-spacing: -.06em;
+    line-height: 1;
+}
+.st-key-ingest_panel, .st-key-settings_panel, .st-key-queue_panel, .st-key-incident_panel {
+    padding: clamp(1rem, 2.5vw, 1.45rem);
+    background: #080b0b;
+    border: 1px solid #252e2d;
+    border-radius: 1.1rem;
+}
+.st-key-ingest_panel [data-testid="stForm"] { border: 0; padding: 0; }
+[data-testid="stBaseButton-primary"] {
+    border-radius: .7rem;
+    background: #9aeee1;
+    border-color: #9aeee1;
+    color: #08211e;
+    font-weight: 700;
+}
+[data-testid="stBaseButton-primary"]:hover { background: #bcfff4; color: #08211e; }
+button:focus-visible, input:focus-visible { outline: 2px solid #9aeee1; outline-offset: 2px; }
+[data-testid="stMetric"] {
+    background: #0b1010;
+    border: 1px solid #25312f;
+    border-radius: .85rem;
+    padding: .85rem 1rem;
+}
+[data-testid="stMetricValue"] { color: #b9f7ec; font-variant-numeric: tabular-nums; }
+.st-key-incident_panel h3, .st-key-queue_panel h3 { letter-spacing: -.025em; }
+.st-key-incident_panel [data-testid="stText"] { overflow-wrap: anywhere; white-space: pre-wrap; }
+[data-testid="stDownloadButton"] button { border-radius: .7rem; border-color: #42625d; }
+[data-testid="stDownloadButton"] button:hover { border-color: #9aeee1; color: #9aeee1; }
+@media (max-width: 600px) {
+    .stMainBlockContainer { padding-top: 3rem; }
+    [data-testid="stMetric"] { padding: .65rem .75rem; }
+}
 </style>
 """)
 with st.container(key="intro"):
@@ -81,7 +121,7 @@ with st.container(key="intro"):
     st.caption("Maintained by Prashant Chauhan")
 
 left, right = st.columns([1, 1])
-with left:
+with left, st.container(key="ingest_panel"):
     st.subheader("Login data")
     if st.button("Load synthetic demo", type="primary"):
         with st.spinner("Loading synthetic login records…"):
@@ -96,7 +136,7 @@ with left:
             else:
                 with st.spinner("Validating CSV…"):
                     ingest(uploaded.getvalue(), "Uploaded CSV")
-with right:
+with right, st.container(key="settings_panel"):
     st.subheader("Detection settings")
     settings = Settings(
         st.number_input("Failure threshold", min_value=2, max_value=100, value=3),
@@ -127,19 +167,22 @@ else:
         st.warning("Some records could not be analyzed. Review their source rows below.")
         with st.expander("Rejected records", expanded=True):
             st.dataframe([asdict(row) for row in rejected], hide_index=True, use_container_width=True)
-    st.subheader("Alert queue")
-    if not alerts:
-        st.info("No alert met the current settings.")
-    else:
-        statuses = st.session_state.setdefault("statuses", {}).setdefault(dataset_id, {})
-        lookup = {alert.id: alert for alert in alerts}
+    with st.container(key="queue_panel"):
+        st.subheader("Alert queue")
+        if not alerts:
+            st.info("No alert met the current settings.")
+        else:
+            statuses = st.session_state.setdefault("statuses", {}).setdefault(dataset_id, {})
+            lookup = {alert.id: alert for alert in alerts}
 
-        def option(alert_id):
-            alert = lookup[alert_id]
-            trigger = alert.failures[-1]
-            correlation = "Success linked" if alert.success else "No linked success"
-            return f"{trigger.user} / {trigger.source_ip} / {correlation} / row {trigger.row}"
+            def option(alert_id):
+                alert = lookup[alert_id]
+                trigger = alert.failures[-1]
+                correlation = "Success linked" if alert.success else "No linked success"
+                return f"{trigger.user} / {trigger.source_ip} / {correlation} / row {trigger.row}"
 
-        selected = st.selectbox("Select incident", list(lookup), format_func=option)
-        st.dataframe(queue(alerts, statuses), hide_index=True, use_container_width=True)
-        review(lookup[selected], settings, statuses, dataset_id)
+            selected = st.selectbox("Select incident", list(lookup), format_func=option)
+            st.dataframe(queue(alerts, statuses), hide_index=True, use_container_width=True)
+    if alerts:
+        with st.container(key="incident_panel"):
+            review(lookup[selected], settings, statuses, dataset_id)
